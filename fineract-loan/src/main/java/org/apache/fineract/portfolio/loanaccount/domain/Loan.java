@@ -1663,6 +1663,14 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
         return isForeClosure;
     }
 
+    public boolean isContractTermination() {
+        if (this.loanSubStatus != null) {
+            return loanSubStatus.isContractTermination();
+        }
+
+        return false;
+    }
+
     public List<LoanTermVariations> getActiveLoanTermVariations() {
         if (this.loanTermVariations == null) {
             return new ArrayList<>();
@@ -1860,6 +1868,10 @@ public class Loan extends AbstractAuditableWithUTCDateTimeCustom<Long> {
 
     public boolean hasAccelerateChargeOffStrategy() {
         return LoanChargeOffBehaviour.ACCELERATE_MATURITY.equals(getLoanProductRelatedDetail().getChargeOffBehaviour());
+    }
+
+    public boolean hasContractTerminationTransaction() {
+        return getLoanTransactions().stream().anyMatch(t -> t.isContractTermination() && t.isNotReversed());
     }
 
 }

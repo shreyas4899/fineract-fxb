@@ -394,6 +394,15 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
     }
 
     public static LoanTransaction chargeOff(final Loan loan, final LocalDate chargeOffDate, final ExternalId externalId) {
+        return createTerminalTransaction(loan, chargeOffDate, LoanTransactionType.CHARGE_OFF, externalId);
+    }
+
+    public static LoanTransaction contractTermination(final Loan loan, final LocalDate transactionDate, final ExternalId externalId) {
+        return createTerminalTransaction(loan, transactionDate, LoanTransactionType.CONTRACT_TERMINATION, externalId);
+    }
+
+    private static LoanTransaction createTerminalTransaction(final Loan loan, final LocalDate transactionDate,
+            final LoanTransactionType transactionType, final ExternalId externalId) {
         BigDecimal principalPortion = loan.getSummary().getTotalPrincipalOutstanding().compareTo(BigDecimal.ZERO) != 0
                 ? loan.getSummary().getTotalPrincipalOutstanding()
                 : null;
@@ -408,8 +417,8 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
                 : null;
         BigDecimal totalOutstanding = loan.getSummary().getTotalOutstanding();
 
-        return new LoanTransaction(loan, loan.getOffice(), LoanTransactionType.CHARGE_OFF, chargeOffDate, totalOutstanding,
-                principalPortion, interestPortion, feePortion, penaltyPortion, null, false, null, externalId);
+        return new LoanTransaction(loan, loan.getOffice(), transactionType, transactionDate, totalOutstanding, principalPortion,
+                interestPortion, feePortion, penaltyPortion, null, false, null, externalId);
     }
 
     private LoanTransaction(final Loan loan, final Office office, final LoanTransactionType type, final BigDecimal amount,
@@ -654,6 +663,10 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
         return LoanTransactionType.CAPITALIZED_INCOME_ADJUSTMENT.equals(getTypeOf()) && isNotReversed();
     }
 
+    public boolean isContractTermination() {
+        return LoanTransactionType.CONTRACT_TERMINATION.equals(getTypeOf()) && isNotReversed();
+    }
+
     public boolean isWaiver() {
         return isInterestWaiver() || isChargesWaiver();
     }
@@ -765,7 +778,7 @@ public class LoanTransaction extends AbstractAuditableWithUTCDateTimeCustom<Long
                 || type == LoanTransactionType.INITIATE_TRANSFER || type == LoanTransactionType.REJECT_TRANSFER
                 || type == LoanTransactionType.WITHDRAW_TRANSFER || type == LoanTransactionType.CHARGE_OFF
                 || type == LoanTransactionType.REAMORTIZE || type == LoanTransactionType.REAGE
-                || type == LoanTransactionType.CAPITALIZED_INCOME_AMORTIZATION);
+                || type == LoanTransactionType.CAPITALIZED_INCOME_AMORTIZATION || type == LoanTransactionType.CONTRACT_TERMINATION);
     }
 
     public void updateOutstandingLoanBalance(BigDecimal outstandingLoanBalance) {
