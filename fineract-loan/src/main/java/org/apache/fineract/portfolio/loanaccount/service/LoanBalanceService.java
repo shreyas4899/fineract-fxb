@@ -87,19 +87,27 @@ public class LoanBalanceService {
             }
             loan.setTotalOverpaid(null);
         } else {
-            final Money overpaidBy = calculateTotalOverpayment(loan);
-            loan.setTotalOverpaid(null);
-            if (!overpaidBy.isLessThanZero()) {
-                loan.setTotalOverpaid(overpaidBy.getAmountDefaultedToNullIfZero());
-            }
-
-            final Money recoveredAmount = loan.calculateTotalRecoveredPayments();
-            loan.setTotalRecovered(recoveredAmount.getAmountDefaultedToNullIfZero());
-
-            final Money principal = loan.getLoanRepaymentScheduleDetail().getPrincipal();
-            loan.getSummary().updateSummary(loan.getCurrency(), principal, loan.getRepaymentScheduleInstallments(), loan.getLoanCharges());
-            loan.updateLoanOutstandingBalances();
+            refreshSummaryAndBalancesForDisbursedLoan(loan);
         }
+    }
+
+    public void refreshSummaryAndBalancesForDisbursedLoan(final Loan loan) {
+        final Money overpaidBy = calculateTotalOverpayment(loan);
+        loan.setTotalOverpaid(null);
+        if (!overpaidBy.isLessThanZero()) {
+            loan.setTotalOverpaid(overpaidBy.getAmountDefaultedToNullIfZero());
+        }
+
+        final Money recoveredAmount = loan.calculateTotalRecoveredPayments();
+        loan.setTotalRecovered(recoveredAmount.getAmountDefaultedToNullIfZero());
+
+        BigDecimal derivedSumDisbursementCharges = loan.deriveSumTotalOfChargesDueAtDisbursement();
+        loan.getSummary().updateTotalFeeChargesDueAtDisbursement(derivedSumDisbursementCharges);
+
+        final Money principal = loan.getLoanRepaymentScheduleDetail().getPrincipal();
+        loan.getSummary().updateSummary(loan.getCurrency(), principal, loan.getRepaymentScheduleInstallments(), loan.getLoanCharges());
+
+        loan.updateLoanOutstandingBalances();
     }
 
     public void updateLoanToLastDisbursalState(final Loan loan, final LoanDisbursementDetails disbursementDetail) {

@@ -1420,10 +1420,11 @@ public class LoanReadPlatformServiceImpl implements LoanReadPlatformService, Loa
             return disbursedAmount;
         }
 
-        private LoanSchedulePeriodData createLoanSchedulePeriodData(final DisbursementData data, BigDecimal disbursementChargeAmount,
-                BigDecimal waivedChargeAmount) {
-            BigDecimal chargeAmount = data.getChargeAmount() == null ? disbursementChargeAmount
-                    : disbursementChargeAmount.add(data.getChargeAmount()).subtract(waivedChargeAmount);
+        private LoanSchedulePeriodData createLoanSchedulePeriodData(final DisbursementData data,
+                BigDecimal totalLoanDisbursementChargesFromSummary, BigDecimal totalLoanWaivedChargeAmountFromAllDisbursements) {
+            BigDecimal chargeAmount = data.getChargeAmount() == null ? totalLoanDisbursementChargesFromSummary
+                    : totalLoanDisbursementChargesFromSummary.add(data.getChargeAmount())
+                            .subtract(totalLoanWaivedChargeAmountFromAllDisbursements);
             return LoanSchedulePeriodData.disbursementOnlyPeriod(data.disbursementDate(), data.getPrincipal(), chargeAmount,
                     data.isDisbursed());
         }
